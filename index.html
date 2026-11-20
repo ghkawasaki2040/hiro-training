@@ -1,0 +1,617 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow, noarchive">
+<meta name="theme-color" content="#EEF1F4" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#141A22" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Hiro_training">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<script>
+// 万一プログラムが止まったときに、原因を画面に表示する（不具合の調査用）
+window.addEventListener("error", e => {
+  try {
+    const d = document.createElement("div");
+    d.style.cssText = "margin:8px;background:#C62828;color:#fff;font:12px/1.4 sans-serif;padding:8px 10px;border-radius:8px";
+    d.textContent = "Error: " + (e.message || "") + " (" + (e.lineno || "") + ":" + (e.colno || "") + ")";
+    (document.body || document.documentElement).prepend(d);
+  } catch(_) {}
+});
+</script>
+<title>Hiro_training</title>
+<style>
+:root{
+  --paper:#EEF1F4; --sheet:#FFFFFF; --ink:#1D2A3A; --sub:#5F6B7A; --rule:#D5DBE2;
+  --blue:#1F6FC5; --blue-soft:#DCE9FA; --now:#FFF6DA; --sat:#2D5EA8; --sun:#B03A3A;
+}
+@media (prefers-color-scheme:dark){:root{
+  --paper:#141A22; --sheet:#1C242F; --ink:#E6EBF1; --sub:#9AA6B4; --rule:#2C3643;
+  --blue:#5EA2EE; --blue-soft:#1D3450; --now:#3A3420; --sat:#86A9E6; --sun:#EB8C8C;
+}}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;touch-action:manipulation}
+body{margin:0;background:var(--paper);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif;
+  padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px)}
+.wrap{max-width:560px;margin:0 auto;padding:0 12px 24px}
+button{touch-action:manipulation;cursor:pointer}
+.num{font-variant-numeric:tabular-nums}
+.panel{background:var(--sheet);border:1px solid var(--rule);border-radius:12px;padding:8px 12px;margin-bottom:8px}
+.h{font-size:12px;color:var(--sub);margin:2px 0 6px}
+/* タブ：Daily＝青・Period＝黄・Summary＝赤・Master＝緑。選んでいないタブは薄く、選んでいるタブは濃く */
+.tabs{display:flex;gap:5px;margin:14px 0 8px;align-items:stretch}
+.tabs button{flex:1;font:inherit;font-size:14px;font-weight:600;border-radius:10px;padding:7px 0;border:1px solid}
+#tabD{color:#1F6FC5;background:#DCE9FA;border-color:#C3D8F3}
+#tabP{color:#9A7000;background:#FBF0C8;border-color:#F0DE9C}
+#tabS{color:#B42323;background:#F9DDDB;border-color:#F0C3C0}
+#tabM{color:#2E7D4F;background:#DCF0E3;border-color:#BFE2CB}
+#tabD.on{color:#fff;background:#1F6FC5;border-color:#1F6FC5}
+#tabP.on{color:#fff;background:#D19A00;border-color:#D19A00}
+#tabS.on{color:#fff;background:#C62828;border-color:#C62828}
+#tabM.on{color:#fff;background:#2E7D4F;border-color:#2E7D4F}
+.tabs .rl{flex:0 0 36px;color:var(--sub);background:var(--sheet);border-color:var(--rule);font-size:16px}
+.view{display:none}.view.on{display:block}
+.title{font-size:13px;font-weight:700;color:var(--sub);margin-top:10px}
+/* Daily：日付 */
+.dnav{display:flex;align-items:center;gap:6px}
+.dnav .arw{font:inherit;font-size:18px;width:38px;height:36px;border:1px solid var(--rule);background:var(--paper);color:var(--ink);border-radius:8px}
+.ov{position:relative;display:inline-flex;align-items:center;gap:4px;background:var(--paper);border:1px solid var(--rule);border-radius:8px;padding:5px 10px;font-weight:700;font-size:16px}
+.ov i{font-style:normal;font-size:10px;color:var(--sub)}
+.ov input{position:absolute;inset:0;width:100%;height:100%;opacity:0;font-size:16px;border:0;margin:0;padding:0;-webkit-appearance:none;appearance:none}
+.dnav .ov{flex:1;justify-content:center}
+.btn{font:inherit;font-size:13px;border:1px solid var(--rule);background:var(--paper);color:var(--ink);border-radius:16px;padding:5px 11px;white-space:nowrap}
+.btn.pri{background:var(--blue);border-color:var(--blue);color:#fff}
+.row2{display:flex;align-items:center;gap:8px;margin-top:8px;font-size:13px;color:var(--sub)}
+.row2 select{font:inherit;font-size:16px;border:1px solid var(--rule);border-radius:8px;background:var(--paper);color:var(--ink);padding:2px 4px}
+.row2 .sp{flex:1}
+.tot{display:flex;flex-wrap:wrap;gap:4px 10px;font-size:13px;margin-top:6px}
+.tot span{white-space:nowrap}.tot b{font-weight:700}
+.tot .none{color:var(--sub)}
+/* Daily：時間割 */
+.slot{border-top:1px solid var(--rule);padding:6px 0}
+.slot:first-child{border-top:0}
+.slot.now{background:var(--now);border-radius:6px}
+.slot .tm{display:flex;align-items:center;gap:6px;width:100%;font:inherit;font-size:14px;text-align:left;background:none;border:0;color:var(--ink);padding:2px 4px}
+.slot .tm b{font-weight:600;min-width:7.6em}
+.slot .tm .add{margin-left:auto;font-size:12px;color:var(--blue)}
+.ent{display:flex;flex-wrap:wrap;gap:0 8px;font-size:13px;padding:2px 4px 2px 18px}
+.ent .nm{font-weight:600;white-space:nowrap}
+.ent .vals{white-space:nowrap;color:var(--sub);margin-left:auto}
+.ent .vals b{color:var(--ink)}
+.ent .cm{flex-basis:100%;color:var(--sub);font-size:12px}
+.ent .ct{color:var(--blue);font-weight:700}
+/* Daily：入力欄（時間をタッチすると開く） */
+.ed{margin:6px 0 4px;padding:8px;border:1px solid var(--blue);border-radius:10px;background:var(--blue-soft)}
+.er{display:grid;grid-template-columns:auto 1fr;gap:4px 6px;align-items:center;padding:6px 0;border-bottom:1px dashed var(--rule);font-size:12px;color:var(--sub)}
+.er:last-of-type{border-bottom:0}
+.er .no{font-weight:700;color:var(--ink)}
+.er .l1{display:flex;gap:6px;align-items:center}
+.er select,.er input{font:inherit;font-size:16px;border:1px solid var(--rule);border-radius:6px;background:var(--sheet);color:var(--ink);padding:3px 5px;min-width:0}
+.er select{flex:1}
+.er .u{white-space:nowrap;min-width:3em}
+.er .l2{grid-column:2;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.er .l2 input{width:5.2em;text-align:right}
+.er .l3{grid-column:2}
+.er .l3 input{width:100%}
+.er .cmv{color:var(--blue);font-weight:700}
+.edb{display:flex;gap:8px;justify-content:flex-end;margin-top:8px}
+/* 表（Period・Summary・Master） */
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{font-weight:600;color:var(--sub);text-align:left;font-size:12px;padding:4px 3px;border-bottom:1px solid var(--rule);white-space:nowrap}
+td{padding:5px 3px;border-bottom:1px solid var(--rule);vertical-align:top}
+td.n,th.n{text-align:right;white-space:nowrap}
+td.u{color:var(--sub);font-size:12px}
+td.d{white-space:nowrap;font-weight:600}
+td.d.sat{color:var(--sat)} td.d.sun{color:var(--sun)}
+tr.gap td{border-bottom:1px solid var(--rule)}
+.memo{color:var(--ink);font-size:12px;cursor:pointer}
+.memo:empty::before{content:"＋";color:var(--blue)}
+.tap{color:var(--blue);font-weight:700;cursor:pointer;text-decoration:underline dotted}
+.tap.empty{color:var(--blue);font-weight:400}
+.pctl{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;font-size:13px;color:var(--sub)}
+.pctl select{font:inherit;font-size:16px;flex:1;min-width:0;border:1px solid var(--rule);border-radius:8px;background:var(--paper);color:var(--ink);padding:3px 4px}
+.pctl .ov{font-size:15px;padding:3px 8px}
+.pdates{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;margin-top:8px;font-size:13px;color:var(--sub)}
+.pdates b{color:var(--ink)}
+/* Master */
+.mt input{font:inherit;font-size:16px;width:100%;border:1px solid var(--rule);border-radius:6px;background:var(--paper);color:var(--ink);padding:3px 4px}
+.mt td{padding:3px 2px;border-bottom:0}
+.mt td.no{color:var(--sub);text-align:right;width:1.8em;padding-top:8px}
+.mt td.v{width:4.6em} .mt td.v input{text-align:right}
+.mt td.uu{width:9.2em}
+.note{font-size:12px;color:var(--sub);line-height:1.6;margin:6px 2px}
+/* パスワード・期限切れ */
+.gate{max-width:420px;margin:60px auto;padding:20px;background:var(--sheet);border:1px solid var(--rule);border-radius:14px}
+.gate h1{font-size:20px;margin:0 0 12px}
+.gate input{font:inherit;font-size:16px;width:100%;padding:8px;border:1px solid var(--rule);border-radius:8px;background:var(--paper);color:var(--ink)}
+.gate .msg{color:#C62828;font-size:13px;min-height:1.4em;margin-top:6px}
+.gate .btn{margin-top:10px}
+[hidden]{display:none !important}
+</style>
+</head>
+<body>
+<div id="gate" class="gate" hidden>
+  <h1>Hiro_training</h1>
+  <div class="note">はじめて使うときだけ、パスワードを入れてください。</div>
+  <input id="gatePw" type="password" autocomplete="off" placeholder="パスワード">
+  <div class="msg" id="gateMsg"></div>
+  <button class="btn pri" id="gateBtn">はじめる</button>
+</div>
+<div id="expired" class="gate" hidden>
+  <h1>Hiro_training</h1>
+  <div class="note">使用期限（2035/12/31）を過ぎたため、記録の入力はできません。記録はバックアップで取り出せます。</div>
+  <button class="btn pri" id="expBackup">バックアップ</button>
+</div>
+
+<div class="wrap" id="app" hidden>
+  <div class="tabs">
+    <button id="tabD">Daily</button><button id="tabP">Period</button><button id="tabS">Summary</button><button id="tabM">Master</button>
+    <button class="rl" id="reload" aria-label="最新の版を読み込む">⟳</button>
+  </div>
+
+  <!-- ===== Daily ===== -->
+  <section class="view" id="viewD">
+    <div class="panel">
+      <div class="dnav">
+        <button class="arw" id="dPrev" aria-label="前の日">‹</button>
+        <label class="ov num"><span id="dLabel"></span><i>▼</i><input id="dDate" type="date" min="2026-01-01" max="2035-12-31" aria-label="日付"></label>
+        <button class="arw" id="dNext" aria-label="次の日">›</button>
+      </div>
+      <div class="row2">
+        <button class="btn" id="dToday">Today</button>
+        <span class="sp"></span>
+        <span>時間単位</span><select id="dUnit" aria-label="時間単位"></select>
+      </div>
+      <div class="title">この日の累計</div>
+      <div class="tot num" id="dTot"></div>
+    </div>
+    <div class="panel" id="slots"></div>
+    <div class="panel">
+      <div class="row2" style="margin-top:0">
+        <button class="btn" id="bkBtn">Backup</button>
+        <button class="btn" id="rsBtn">Restore</button>
+      </div>
+      <div class="note">記録はこのスマホの中だけに保存されます。ときどき「Backup」でファイルに保存しておいてください。<br>時間をタッチすると、その時間に5行まで入力できます。</div>
+    </div>
+    <input type="file" id="importFile" accept="application/json,.json" hidden>
+  </section>
+
+  <!-- ===== Period ===== -->
+  <section class="view" id="viewP">
+    <div class="panel">
+      <div class="pctl" style="justify-content:flex-end">
+        <button class="btn" id="pAdd">＋新しい期間</button><button class="btn" id="pDel">削除</button>
+      </div>
+      <div class="pctl" style="margin-top:6px"><select id="pSel" aria-label="期間を選ぶ"></select></div>
+      <div class="pdates num">
+        <span>Start: <label class="ov"><span id="pStartTxt"></span><i>▼</i><input id="pStart" type="date" min="2026-01-01" max="2035-12-31" aria-label="開始日"></label></span>
+        <span>End: <label class="ov"><span id="pEndTxt"></span><i>▼</i><input id="pEnd" type="date" min="2026-01-01" max="2035-12-31" aria-label="終了日"></label></span>
+        <span>日数: <b id="pDays"></b></span>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="h">期間の累計（種目ごと）</div>
+      <table class="num"><thead><tr><th>種目</th><th class="n">累計</th><th>単位</th></tr></thead><tbody id="pTot"></tbody></table>
+    </div>
+    <div class="panel">
+      <div class="h">日ごとの累計　（memo をタッチすると入力できます）</div>
+      <table class="num"><thead><tr><th>日付</th><th>種目</th><th class="n">累計</th><th>単位</th><th>memo</th></tr></thead><tbody id="pRows"></tbody></table>
+    </div>
+  </section>
+
+  <!-- ===== Summary ===== -->
+  <section class="view" id="viewS">
+    <div class="panel">
+      <div class="pdates num" style="margin-top:0">
+        <span>Start: <label class="ov"><span id="sFromTxt"></span><i>▼</i><input id="sFrom" type="date" min="2026-01-01" max="2035-12-31" aria-label="開始日"></label></span>
+        <span>End: <label class="ov"><span id="sToTxt"></span><i>▼</i><input id="sTo" type="date" min="2026-01-01" max="2035-12-31" aria-label="終了日"></label></span>
+        <span>日数: <b id="sDays"></b></span>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="h">種目ごとの集計　（target と memo をタッチすると入力できます）</div>
+      <table class="num"><thead><tr><th>種目</th><th class="n">target</th><th class="n">real</th><th class="n">%</th><th>memo</th></tr></thead><tbody id="sRows"></tbody></table>
+    </div>
+  </section>
+
+  <!-- ===== Master ===== -->
+  <section class="view" id="viewM">
+    <div class="panel">
+      <div class="h">training_master　（種目は10文字まで・数値は Daily の target に最初に入る値）</div>
+      <table class="mt num"><thead><tr><th></th><th>種目</th><th class="n">数値</th><th>単位</th></tr></thead><tbody id="mRows"></tbody></table>
+      <div class="note">入力すると自動で保存されます。種目名を変えても、それまでの記録の名前は変わりません。</div>
+    </div>
+  </section>
+</div>
+<script>
+
+"use strict";
+const CFG = {"pw": "8e639b1b", "useEnd": "2035-12-31", "dateMin": "2026-01-01", "dateMax": "2035-12-31", "dayStart": 300, "dayEnd": 1440, "units": [10, 15, 20, 30, 60], "unit": 30, "rows": 5, "masterRows": 20, "nameMax": 10, "unitMax": 12, "memoMax": 20, "numMax": 99999, "targetMax": 9999999, "maxPeriods": 120, "maxDays": 185, "firstPeriod": ["2026-11-20", "2026-12-31"], "master": [{"n": "腹筋", "v": 20, "u": "回"}, {"n": "腕立て", "v": 20, "u": "回"}, {"n": "バインダー", "v": 20, "u": "回"}, {"n": "ダンベル.2Kg", "v": 3, "u": "セット(10回)"}, {"n": "ダンベル.3Kg", "v": 2, "u": "セット(10回)"}, {"n": "ダンベル.4Kg", "v": 1, "u": "セット(10回)"}, {"n": "ダンベル.5Kg", "v": 1, "u": "セット(10回)"}, {"n": "ウォーキング", "v": 8000, "u": "歩"}, {"n": "ジョギング", "v": 2, "u": "km"}, {"n": "ダッシュ", "v": 3, "u": "本(100m)"}, {"n": "水泳", "v": 2, "u": "セット(25m往復)"}, {"n": "ラジオ体操", "v": 1, "u": "回"}], "version": "1"};
+const KEY = "hiro-training-v1";
+// ---- 日付 ----
+const pad = n => String(n).padStart(2, "0");
+const iso = d => d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
+const parse = s => { const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d); };
+const addDays = (s, n) => { const d = parse(s); d.setDate(d.getDate() + n); return iso(d); };
+const dayDiff = (a, b) => Math.round((parse(b) - parse(a)) / 86400000);
+const WD = ["日", "月", "火", "水", "木", "金", "土"];
+const ymdS = s => Number(s.slice(0,4)) + "/" + Number(s.slice(5,7)) + "/" + Number(s.slice(8,10));
+const mdW = s => { const d = parse(s); return (d.getMonth() + 1) + "/" + d.getDate() + "（" + WD[d.getDay()] + "）"; };
+const hm = m => Math.floor(m / 60) + ":" + pad(m % 60);
+let today = iso(new Date());
+// ---- 数値 ----
+const fmt = v => v == null || v === "" ? "" : Number(v).toLocaleString("ja-JP", { maximumFractionDigits: 2 });
+function parseNum(s, max){                  // 空なら null。5桁（max があればそれ）・小数2桁まで
+  s = String(s == null ? "" : s).trim().replace(/[０-９．]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0)).replace(/,/g, "");
+  if (s === "") return null;
+  const v = Number(s);
+  if (!isFinite(v) || v < 0) return NaN;
+  return Math.min(max || CFG.numMax, Math.round(v * 100) / 100);
+}
+const cut = (s, n) => [...String(s || "")].slice(0, n).join("");
+const esc = s => String(s == null ? "" : s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+
+// ---- 保存データ ----
+// days[日付] = [{ at:開始分, n:種目, u:単位, t:target, r:real, m:memo }]
+// periods = [{ start, end }]、pmemo["日付|種目"]、starget[種目]、smemo[種目]
+function blank(){
+  const master = CFG.master.map(x => ({ ...x }));
+  while (master.length < CFG.masterRows) master.push({ n: "", v: null, u: "" });
+  return { master, unit: CFG.unit, days: {}, periods: [{ start: CFG.firstPeriod[0], end: CFG.firstPeriod[1] }], cur: 0,
+           pmemo: {}, starget: {}, smemo: {}, sr: null };
+}
+function normalize(s){
+  const b = blank();
+  if (!s || typeof s !== "object") return b;
+  const out = { ...b };
+  if (Array.isArray(s.master)) { out.master = s.master.slice(0, CFG.masterRows).map(x => ({ n: cut(x && x.n, CFG.nameMax), v: parseNum(x && x.v), u: cut(x && x.u, CFG.unitMax) }));
+    while (out.master.length < CFG.masterRows) out.master.push({ n: "", v: null, u: "" }); }
+  if (CFG.units.includes(Number(s.unit))) out.unit = Number(s.unit);
+  out.days = {};
+  if (s.days && typeof s.days === "object") Object.entries(s.days).forEach(([k, arr]) => {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(k) || !Array.isArray(arr)) return;
+    const a = arr.filter(e => e && e.n).map(e => ({ at: Number(e.at) || 0, n: cut(e.n, CFG.nameMax), u: cut(e.u, CFG.unitMax),
+      t: parseNum(e.t), r: parseNum(e.r), m: cut(e.m, CFG.memoMax) })).map(e => ({ ...e, t: isNaN(e.t) ? null : e.t, r: isNaN(e.r) ? null : e.r }));
+    if (a.length) out.days[k] = a;
+  });
+  if (Array.isArray(s.periods) && s.periods.length) out.periods = s.periods.filter(p => p && p.start && p.end).slice(0, CFG.maxPeriods).map(p => ({ start: p.start, end: p.end }));
+  if (!out.periods.length) out.periods = b.periods;
+  out.cur = Math.max(0, Math.min(out.periods.length - 1, Number(s.cur) || 0));
+  ["pmemo", "starget", "smemo"].forEach(k => { if (s[k] && typeof s[k] === "object") out[k] = { ...s[k] }; });
+  if (s.sr && s.sr.from && s.sr.to) out.sr = { from: s.sr.from, to: s.sr.to };
+  return out;
+}
+let state = blank();
+try { const s = JSON.parse(localStorage.getItem(KEY)); if (s) state = normalize(s); } catch(e) {}
+function save(){ try { localStorage.setItem(KEY, JSON.stringify(state)); } catch(e) { alert("保存できませんでした。容量がいっぱいかもしれません。"); } }
+
+// ---- 集計の部品 ----
+const dayEntries = d => (state.days[d] || []).map((e, i) => ({ ...e, i })).sort((a, b) => a.at - b.at || a.i - b.i);
+// その日の種目ごとの累計（real の合計）と、行ごとの累計
+function dayTotals(d){
+  const tot = new Map(), cum = new Map(), unit = new Map();
+  dayEntries(d).forEach(e => {
+    const v = (tot.get(e.n) || 0) + (e.r || 0);
+    tot.set(e.n, Math.round(v * 100) / 100); cum.set(e.i, Math.round(v * 100) / 100);
+    if (!unit.has(e.n) && e.u) unit.set(e.n, e.u);
+  });
+  return { tot, cum, unit };
+}
+function rangeTotals(a, b){                  // 範囲の種目ごとの real 合計
+  const tot = new Map(), unit = new Map();
+  Object.keys(state.days).forEach(d => { if (d < a || d > b) return;
+    dayTotals(d).tot.forEach((v, n) => tot.set(n, Math.round(((tot.get(n) || 0) + v) * 100) / 100));
+    (state.days[d] || []).forEach(e => { if (!unit.has(e.n) && e.u) unit.set(e.n, e.u); });
+  });
+  return { tot, unit };
+}
+const masterNames = () => state.master.filter(x => x.n).map(x => x.n);
+const masterOf = n => state.master.find(x => x.n === n);
+// 種目の並び順：Master の順、そのあとに Master にない種目
+function orderNames(names){
+  const mn = masterNames(), set = new Set(names);
+  return mn.filter(n => set.has(n)).concat([...set].filter(n => !mn.includes(n)).sort());
+}
+
+// ---- バックアップ・復元 ----
+function doBackup(){
+  const blob = new Blob([JSON.stringify({ app: "hiro-training", version: CFG.version, saved: new Date().toISOString(), ...state }, null, 1)], { type: "application/json" });
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "hiro_training_backup_" + today + ".json";
+  document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+}
+document.getElementById("bkBtn").addEventListener("click", doBackup);
+document.getElementById("expBackup").addEventListener("click", doBackup);
+document.getElementById("rsBtn").addEventListener("click", () => document.getElementById("importFile").click());
+document.getElementById("importFile").addEventListener("change", e => {
+  const f = e.target.files[0]; e.target.value = ""; if (!f) return;
+  const rd = new FileReader();
+  rd.onload = () => {
+    try {
+      const s = JSON.parse(rd.result);
+      if (!s || s.app !== "hiro-training") throw 0;
+      const nd = Object.keys(s.days || {}).length;
+      if (!confirm(`バックアップ（記録 ${nd} 日分）で今の内容を置き換えます。よろしいですか？`)) return;
+      state = normalize(s); save(); renderAll(); alert("復元しました。");
+    } catch(_) { alert("このファイルは Hiro_training のバックアップではないようです。"); }
+  };
+  rd.readAsText(f);
+});
+
+// ---- パスワード・使用期限 ----
+function fnv(t){ let h = 0x811C9DC5; for (const b of new TextEncoder().encode(t)) { h ^= b; h = Math.imul(h, 0x01000193) >>> 0; } return h.toString(16).padStart(8, "0"); }
+function startApp(){
+  document.getElementById("gate").hidden = true;
+  if (today > CFG.useEnd) { document.getElementById("expired").hidden = false; return; }
+  document.getElementById("app").hidden = false;
+  renderAll(); showView(curView); jumpNow();
+}
+document.getElementById("gateBtn").addEventListener("click", () => {
+  const v = document.getElementById("gatePw").value.trim();
+  if (fnv("hiro:" + v) === CFG.pw) { try { localStorage.setItem(KEY + "-auth", "1"); } catch(e) {} startApp(); }
+  else document.getElementById("gateMsg").textContent = "パスワードが違います。";
+});
+document.getElementById("gatePw").addEventListener("keydown", e => { if (e.key === "Enter") document.getElementById("gateBtn").click(); });
+
+// =====================================================================
+// Daily
+// =====================================================================
+let cur = today, openSlot = null;
+const dDate = document.getElementById("dDate"), dUnit = document.getElementById("dUnit");
+dUnit.innerHTML = CFG.units.map(u => `<option value="${u}">${u}分</option>`).join("");
+function slotStarts(){ const a = []; for (let m = CFG.dayStart; m < CFG.dayEnd; m += state.unit) a.push(m); return a; }
+const inSlot = (e, m) => e.at >= m && e.at < m + state.unit;
+function renderDaily(){
+  dDate.value = cur; dUnit.value = String(state.unit);
+  document.getElementById("dLabel").textContent = ymdS(cur) + "（" + WD[parse(cur).getDay()] + "）";
+  const { tot, cum, unit } = dayTotals(cur);
+  const names = orderNames([...tot.keys()]);
+  document.getElementById("dTot").innerHTML = names.length
+    ? names.map(n => `<span>${esc(n)} <b>${fmt(tot.get(n))}</b>${esc(unit.get(n) || "")}</span>`).join("")
+    : `<span class="none">まだ記録がありません</span>`;
+  const ents = dayEntries(cur), nowM = new Date().getHours() * 60 + new Date().getMinutes();
+  document.getElementById("slots").innerHTML = slotStarts().map(m => {
+    const es = ents.filter(e => inSlot(e, m));
+    const isNow = cur === today && nowM >= m && nowM < m + state.unit;
+    let h = `<div class="slot${isNow ? " now" : ""}" data-m="${m}"><button class="tm num" data-m="${m}"><b>${hm(m)} 〜 ${hm(m + state.unit)}</b><span class="add">${openSlot === m ? "" : es.length ? "編集" : "＋入力"}</span></button>`;
+    if (openSlot === m) h += editorHtml(m, es, cum);
+    else h += es.map(e => `<div class="ent num"><span class="nm">${esc(e.n)}</span><span class="vals">target ${fmt(e.t) || "–"}　real <b>${fmt(e.r) || "–"}</b>${esc(e.u)}　累計 <span class="ct">${fmt(cum.get(e.i))}</span></span>${e.m ? `<span class="cm">${esc(e.m)}</span>` : ""}</div>`).join("");
+    return h + `</div>`;
+  }).join("");
+}
+function nameOptions(sel){
+  const mn = masterNames(), list = sel && !mn.includes(sel) ? mn.concat([sel]) : mn;
+  return `<option value="">（種目を選ぶ）</option>` + list.map(n => `<option${n === sel ? " selected" : ""}>${esc(n)}</option>`).join("");
+}
+function editorHtml(m, es, cum){
+  const n = Math.max(CFG.rows, es.length);
+  let h = `<div class="ed" id="ed">`;
+  for (let k = 0; k < n; k++) {
+    const e = es[k] || {};
+    h += `<div class="er num" data-i="${e.i == null ? "" : e.i}">
+      <span class="no">${k + 1}</span>
+      <div class="l1"><select class="fn" aria-label="種目">${nameOptions(e.n)}</select><span class="u">${esc(e.u || "")}</span></div>
+      <div class="l2"><span>target</span><input class="ft" inputmode="decimal" value="${e.t == null ? "" : e.t}" aria-label="target">
+        <span>real</span><input class="fr" inputmode="decimal" value="${e.r == null ? "" : e.r}" aria-label="real">
+        <span>累計 <span class="cmv">${e.i == null ? "–" : fmt(cum.get(e.i))}</span></span></div>
+      <div class="l3"><input class="fm" maxlength="${CFG.memoMax}" placeholder="memo（${CFG.memoMax}文字まで）" value="${esc(e.m || "")}" aria-label="memo"></div>
+    </div>`;
+  }
+  return h + `<div class="edb"><button class="btn" id="edCancel">閉じる</button><button class="btn pri" id="edSave">保存</button></div></div>`;
+}
+// 種目を選ぶと、単位と target（Master の数値）が入る
+document.getElementById("slots").addEventListener("change", e => {
+  const s = e.target.closest(".fn"); if (!s) return;
+  const row = s.closest(".er"), mm = masterOf(s.value);
+  row.querySelector(".u").textContent = mm ? mm.u : "";
+  if (mm && mm.v != null && row.querySelector(".ft").value === "") row.querySelector(".ft").value = mm.v;
+});
+document.getElementById("slots").addEventListener("click", e => {
+  const tm = e.target.closest(".tm");
+  if (tm) { const m = Number(tm.dataset.m); openSlot = openSlot === m ? null : m; renderDaily(); return; }
+  if (e.target.id === "edCancel") { openSlot = null; renderDaily(); return; }
+  if (e.target.id === "edSave") saveSlot();
+});
+function saveSlot(){
+  const m = openSlot, rows = [...document.querySelectorAll("#ed .er")];
+  const old = state.days[cur] || [];
+  const keep = old.filter(e => !inSlot(e, m));
+  const add = [];
+  for (const [k, row] of rows.entries()) {
+    const n = row.querySelector(".fn").value;
+    const t = parseNum(row.querySelector(".ft").value), r = parseNum(row.querySelector(".fr").value);
+    const memo = cut(row.querySelector(".fm").value.trim(), CFG.memoMax);
+    if (!n) { if (t != null || r != null || memo) { alert(`${k + 1}行目：種目を選んでください。`); return; } continue; }
+    if (Number.isNaN(t) || Number.isNaN(r)) { alert(`${k + 1}行目：数字を入れてください（${fmt(CFG.numMax)}まで、小数は2桁まで）。`); return; }
+    const oi = row.dataset.i === "" ? null : Number(row.dataset.i);
+    const mm = masterOf(n), prev = oi != null ? old[oi] : null;
+    add.push({ at: prev ? prev.at : m, n, u: mm ? mm.u : (prev ? prev.u : ""), t, r, m: memo });
+  }
+  const all = keep.concat(add);
+  if (all.length) state.days[cur] = all; else delete state.days[cur];
+  save(); openSlot = null; renderDaily();
+}
+function jumpNow(){
+  const el = [...document.querySelectorAll("#slots .slot")].find(x => x.classList.contains("now"));
+  if (el && curView === "D") el.scrollIntoView({ block: "center" });
+}
+function moveDay(n){ const v = addDays(cur, n); if (v < CFG.dateMin || v > CFG.dateMax) return; cur = v; openSlot = null; renderDaily(); }
+document.getElementById("dPrev").addEventListener("click", () => moveDay(-1));
+document.getElementById("dNext").addEventListener("click", () => moveDay(1));
+document.getElementById("dToday").addEventListener("click", () => { cur = today; openSlot = null; renderDaily(); jumpNow(); });
+dDate.addEventListener("change", () => { if (dDate.value) { cur = dDate.value; openSlot = null; renderDaily(); } });
+dUnit.addEventListener("change", () => { state.unit = Number(dUnit.value); save(); openSlot = null; renderDaily(); });
+
+// =====================================================================
+// Period
+// =====================================================================
+const P = () => state.periods[state.cur];
+const pStart = document.getElementById("pStart"), pEnd = document.getElementById("pEnd");
+function renderPeriod(){
+  const sel = document.getElementById("pSel");
+  sel.innerHTML = state.periods.map((p, i) => `<option value="${i}">Period ${i + 1}　${ymdS(p.start)}〜${ymdS(p.end)}</option>`).join("");
+  sel.value = String(state.cur);
+  const p = P();
+  pStart.value = p.start; pEnd.value = p.end;
+  document.getElementById("pStartTxt").textContent = ymdS(p.start);
+  document.getElementById("pEndTxt").textContent = ymdS(p.end);
+  document.getElementById("pDays").textContent = dayDiff(p.start, p.end) + 1;
+  const { tot, unit } = rangeTotals(p.start, p.end);
+  const names = orderNames([...tot.keys()]);
+  document.getElementById("pTot").innerHTML = names.length
+    ? names.map(n => `<tr><td>${esc(n)}</td><td class="n"><b>${fmt(tot.get(n))}</b></td><td class="u">${esc(unit.get(n) || "")}</td></tr>`).join("")
+    : `<tr><td colspan="3" class="u">この期間の記録はまだありません</td></tr>`;
+  let h = "";
+  for (let d = p.start; d <= p.end; d = addDays(d, 1)) {
+    const dt = dayTotals(d), ns = orderNames([...dt.tot.keys()]), wd = parse(d).getDay();
+    const cls = "d" + (wd === 6 ? " sat" : wd === 0 ? " sun" : "");
+    if (!ns.length) { h += `<tr><td class="${cls}">${mdW(d)}</td><td colspan="4"></td></tr>`; continue; }
+    ns.forEach((n, k) => {
+      const key = d + "|" + n;
+      h += `<tr>${k === 0 ? `<td class="${cls}" rowspan="${ns.length}">${mdW(d)}</td>` : ""}<td>${esc(n)}</td><td class="n"><b>${fmt(dt.tot.get(n))}</b></td><td class="u">${esc(dt.unit.get(n) || "")}</td><td><span class="memo" data-pm="${esc(key)}">${esc(state.pmemo[key] || "")}</span></td></tr>`;
+    });
+  }
+  document.getElementById("pRows").innerHTML = h;
+}
+document.getElementById("pSel").addEventListener("change", e => { state.cur = Number(e.target.value); save(); renderPeriod(); });
+function setPeriod(){
+  let s = pStart.value || P().start, e = pEnd.value || P().end;
+  if (s > e) { alert("開始日は、終了日より前にしてください。"); renderPeriod(); return; }
+  if (dayDiff(s, e) + 1 > CFG.maxDays) { alert(`1つの期間は ${CFG.maxDays} 日までです。`); renderPeriod(); return; }
+  state.periods[state.cur] = { start: s, end: e }; save(); renderPeriod();
+}
+[pStart, pEnd].forEach(el => { el.addEventListener("change", setPeriod); el.addEventListener("click", () => { try { el.showPicker && el.showPicker(); } catch(_) {} }); });
+document.getElementById("pAdd").addEventListener("click", () => {
+  if (state.periods.length >= CFG.maxPeriods) { alert(`期間は ${CFG.maxPeriods} 個までです。`); return; }
+  const last = state.periods[state.periods.length - 1], s = addDays(last.end, 1);
+  state.periods.push({ start: s, end: addDays(s, 29) }); state.cur = state.periods.length - 1; save(); renderPeriod();
+});
+document.getElementById("pDel").addEventListener("click", () => {
+  if (state.periods.length <= 1) { alert("最後の1つの期間は削除できません。"); return; }
+  const p = P();
+  if (!confirm(`Period ${state.cur + 1}（${ymdS(p.start)}〜${ymdS(p.end)}）を削除しますか？\n（Daily の記録は消えません）`)) return;
+  state.periods.splice(state.cur, 1); state.cur = Math.max(0, state.cur - 1); save(); renderPeriod();
+});
+document.getElementById("pRows").addEventListener("click", e => {
+  const m = e.target.closest("[data-pm]"); if (!m) return;
+  const key = m.dataset.pm, v = prompt(`memo（${CFG.memoMax}文字まで）\n${key.replace("|", "　")}`, state.pmemo[key] || "");
+  if (v == null) return;
+  const t = cut(v.trim(), CFG.memoMax);
+  if (t) state.pmemo[key] = t; else delete state.pmemo[key];
+  save(); renderPeriod();
+});
+
+// =====================================================================
+// Summary
+// =====================================================================
+const sFrom = document.getElementById("sFrom"), sTo = document.getElementById("sTo");
+function sRange(){ return state.sr || { from: P().start, to: P().end }; }
+function renderSummary(){
+  const r = sRange();
+  sFrom.value = r.from; sTo.value = r.to;
+  document.getElementById("sFromTxt").textContent = ymdS(r.from);
+  document.getElementById("sToTxt").textContent = ymdS(r.to);
+  document.getElementById("sDays").textContent = dayDiff(r.from, r.to) + 1;
+  const { tot, unit } = rangeTotals(r.from, r.to);
+  const names = orderNames(masterNames().concat([...tot.keys()], Object.keys(state.starget)));
+  document.getElementById("sRows").innerHTML = names.map(n => {
+    const tg = state.starget[n], re = tot.get(n) || 0, u = unit.get(n) || (masterOf(n) || {}).u || "";
+    const pc = tg ? Math.floor(re / tg * 100) + "%" : "";
+    return `<tr><td>${esc(n)}<br><span class="u" style="color:var(--sub);font-size:11px">${esc(u)}</span></td>
+      <td class="n"><span class="tap${tg == null ? " empty" : ""}" data-st="${esc(n)}">${tg == null ? "＋" : fmt(tg)}</span></td>
+      <td class="n"><b>${re ? fmt(re) : "0"}</b></td><td class="n u">${pc}</td>
+      <td><span class="memo" data-sm="${esc(n)}">${esc(state.smemo[n] || "")}</span></td></tr>`;
+  }).join("");
+}
+[sFrom, sTo].forEach(el => {
+  el.addEventListener("click", () => { try { el.showPicker && el.showPicker(); } catch(_) {} });
+  el.addEventListener("change", () => {
+    if (!sFrom.value || !sTo.value || sFrom.value > sTo.value) { if (sFrom.value && sTo.value) alert("開始日は、終了日より前にしてください。"); renderSummary(); return; }
+    state.sr = { from: sFrom.value, to: sTo.value }; save(); renderSummary();
+  });
+});
+document.getElementById("sRows").addEventListener("click", e => {
+  const st = e.target.closest("[data-st]"), sm = e.target.closest("[data-sm]");
+  if (st) {
+    const n = st.dataset.st, v = prompt(`${n} の target（${fmt(CFG.targetMax)}まで・小数可。空にすると消えます）`, state.starget[n] == null ? "" : state.starget[n]);
+    if (v == null) return;
+    const x = parseNum(v, CFG.targetMax);
+    if (Number.isNaN(x)) { alert("数字を入れてください。"); return; }
+    if (x == null) delete state.starget[n]; else state.starget[n] = x;
+    save(); renderSummary();
+  } else if (sm) {
+    const n = sm.dataset.sm, v = prompt(`${n} の memo（${CFG.memoMax}文字まで）`, state.smemo[n] || "");
+    if (v == null) return;
+    const t = cut(v.trim(), CFG.memoMax);
+    if (t) state.smemo[n] = t; else delete state.smemo[n];
+    save(); renderSummary();
+  }
+});
+
+// =====================================================================
+// Master
+// =====================================================================
+function renderMaster(){
+  document.getElementById("mRows").innerHTML = state.master.map((x, i) => `<tr data-i="${i}"><td class="no">${i + 1}</td>
+    <td><input class="mn" maxlength="${CFG.nameMax}" value="${esc(x.n)}" aria-label="種目 ${i + 1}"></td>
+    <td class="v"><input class="mv" inputmode="decimal" value="${x.v == null ? "" : x.v}" aria-label="数値 ${i + 1}"></td>
+    <td class="uu"><input class="mu" maxlength="${CFG.unitMax}" value="${esc(x.u)}" aria-label="単位 ${i + 1}"></td></tr>`).join("");
+}
+document.getElementById("mRows").addEventListener("change", e => {
+  const tr = e.target.closest("tr"); if (!tr) return;
+  const i = Number(tr.dataset.i), x = state.master[i];
+  if (e.target.classList.contains("mn")) {
+    const n = cut(e.target.value.trim(), CFG.nameMax);
+    if (n && state.master.some((y, j) => j !== i && y.n === n)) { alert("同じ種目名がすでにあります。"); e.target.value = x.n; return; }
+    x.n = n;
+  } else if (e.target.classList.contains("mv")) {
+    const v = parseNum(e.target.value);
+    if (Number.isNaN(v)) { alert("数字を入れてください。"); e.target.value = x.v == null ? "" : x.v; return; }
+    x.v = v;
+  } else if (e.target.classList.contains("mu")) x.u = cut(e.target.value.trim(), CFG.unitMax);
+  save();
+});
+
+// =====================================================================
+// タブ・全体
+// =====================================================================
+let curView = "D";
+try { const v = localStorage.getItem(KEY + "-view"); if ("DPSM".includes(v) && v) curView = v; } catch(e) {}
+function showView(v){
+  curView = v;
+  try { localStorage.setItem(KEY + "-view", v); } catch(e) {}
+  ["D", "P", "S", "M"].forEach(k => {
+    document.getElementById("view" + k).classList.toggle("on", k === v);
+    document.getElementById("tab" + k).classList.toggle("on", k === v);
+  });
+  if (v === "D") renderDaily(); if (v === "P") renderPeriod(); if (v === "S") renderSummary(); if (v === "M") renderMaster();
+  window.scrollTo({ top: 0 });
+}
+["D", "P", "S", "M"].forEach(k => document.getElementById("tab" + k).addEventListener("click", () => showView(k)));
+function renderAll(){ renderDaily(); renderPeriod(); renderSummary(); renderMaster(); }
+function checkDay(){ const t = iso(new Date()); if (t !== today) { if (cur === today) cur = t; today = t; if (openSlot == null) renderAll(); } }
+setInterval(checkDay, 60000);
+document.addEventListener("visibilitychange", () => { if (!document.hidden) { checkDay(); if (swReg) swReg.update().catch(() => {}); } });
+
+// ---- オフライン用・自動更新 ----
+let swReg = null;
+if ("serviceWorker" in navigator && location.protocol === "https:") {
+  navigator.serviceWorker.register("sw.js").then(r => { swReg = r; }).catch(() => {});
+  let reloaded = false;
+  navigator.serviceWorker.addEventListener("controllerchange", () => { if (reloaded || openSlot != null) return; reloaded = true; location.reload(); });
+}
+document.getElementById("reload").addEventListener("click", () => {
+  if (swReg) swReg.update().finally(() => location.reload()); else location.reload();
+});
+
+// ---- 起動 ----
+let authed = false;
+try { authed = localStorage.getItem(KEY + "-auth") === "1"; } catch(e) {}
+if (authed) startApp(); else document.getElementById("gate").hidden = false;
+
+</script>
+</body>
+</html>
