@@ -80,7 +80,7 @@ button{touch-action:manipulation;cursor:pointer}
 .dt td.nm .memo:empty::before{content:"memo＋";font-size:11px}
 .dt input{font:inherit;font-size:16px;width:4.3em;text-align:right;border:1px solid var(--rule);border-radius:6px;background:var(--paper);color:var(--ink);padding:3px 4px}
 .dt input.fr{width:4.8em}
-.dt .plus{font:inherit;font-size:16px;font-weight:700;width:32px;height:32px;border-radius:50%;border:1px solid var(--blue);background:var(--sheet);color:var(--blue);padding:0}
+.dt .plus{font:inherit;font-size:20px;line-height:1;width:34px;height:34px;border:0;background:none;padding:0}
 .dt td.face{width:1.6em;font-size:20px;text-align:center}
 .dt tr.off td.nm{color:var(--sub)}
 .dt tr.off input{opacity:.55}
@@ -158,7 +158,7 @@ tr.gap td{border-bottom:1px solid var(--rule)}
         <thead><tr><th>種目</th><th class="n">target</th><th class="n">real</th><th></th><th></th></tr></thead>
         <tbody id="dRows"></tbody>
       </table>
-      <div class="note">「＋」で Master の数値（1回分）を real に足します。real が target 以上になると 😁。target を空にすると、その日はやらない種目になります。memo をタッチすると入力できます。</div>
+      <div class="note">⚪️ を押すと real に target と同じ数が入り（🔵）、もう一度押すと消えます。それ以外の数は real に直接入れてください。real が target 以上になると 😁。target を空にすると、その日はやらない種目になります。memo をタッチすると入力できます。</div>
     </div>
     <div class="panel">
       <div class="row2" style="margin-top:0">
@@ -220,7 +220,7 @@ tr.gap td{border-bottom:1px solid var(--rule)}
 <script>
 
 "use strict";
-const CFG = {"pw": "8e639b1b", "useEnd": "2035-12-31", "dateMin": "2026-01-01", "dateMax": "2035-12-31", "dayStart": 300, "dayEnd": 1440, "units": [10, 15, 20, 30, 60], "unit": 30, "rows": 5, "masterRows": 20, "nameMax": 10, "unitMax": 12, "memoMax": 20, "numMax": 99999, "targetMax": 9999999, "maxPeriods": 120, "maxDays": 185, "firstPeriod": ["2026-11-20", "2026-12-31"], "master": [{"n": "腹筋", "v": 20, "u": "回"}, {"n": "腕立て", "v": 20, "u": "回"}, {"n": "バインダー", "v": 20, "u": "回"}, {"n": "ダンベル.2Kg", "v": 3, "u": "セット(10回)"}, {"n": "ダンベル.3Kg", "v": 2, "u": "セット(10回)"}, {"n": "ダンベル.4Kg", "v": 1, "u": "セット(10回)"}, {"n": "ダンベル.5Kg", "v": 1, "u": "セット(10回)"}, {"n": "ウォーキング", "v": 8000, "u": "歩"}, {"n": "ジョギング", "v": 2, "u": "km"}, {"n": "ダッシュ", "v": 3, "u": "本(100m)"}, {"n": "水泳", "v": 2, "u": "セット(25m往復)"}, {"n": "ラジオ体操", "v": 1, "u": "回"}], "version": "2"};
+const CFG = {"pw": "8e639b1b", "useEnd": "2035-12-31", "dateMin": "2026-01-01", "dateMax": "2035-12-31", "dayStart": 300, "dayEnd": 1440, "units": [10, 15, 20, 30, 60], "unit": 30, "rows": 5, "masterRows": 20, "nameMax": 10, "unitMax": 12, "memoMax": 20, "numMax": 99999, "targetMax": 9999999, "maxPeriods": 120, "maxDays": 185, "firstPeriod": ["2026-11-20", "2026-12-31"], "master": [{"n": "腹筋", "v": 20, "u": "回"}, {"n": "腕立て", "v": 20, "u": "回"}, {"n": "バインダー", "v": 20, "u": "回"}, {"n": "ダンベル.2Kg", "v": 3, "u": "セット(10回)"}, {"n": "ダンベル.3Kg", "v": 2, "u": "セット(10回)"}, {"n": "ダンベル.4Kg", "v": 1, "u": "セット(10回)"}, {"n": "ダンベル.5Kg", "v": 1, "u": "セット(10回)"}, {"n": "ウォーキング", "v": 8000, "u": "歩"}, {"n": "ジョギング", "v": 2, "u": "km"}, {"n": "ダッシュ", "v": 3, "u": "本(100m)"}, {"n": "水泳", "v": 2, "u": "セット(25m往復)"}, {"n": "ラジオ体操", "v": 1, "u": "回"}], "version": "3"};
 const KEY = "hiro-training-v1";
 // ---- 日付 ----
 const pad = n => String(n).padStart(2, "0");
@@ -371,7 +371,7 @@ function rowHtml(n){
     <td class="nm">${esc(n)}<small>${esc(unitOf(cur, n))}</small><span class="memo" data-dm="1">${esc(e.m || "")}</span></td>
     <td class="n"><input class="ft" inputmode="decimal" value="${t == null ? "" : t}" aria-label="${esc(n)} target"></td>
     <td class="n"><input class="fr" inputmode="decimal" value="${e.r == null ? "" : e.r}" aria-label="${esc(n)} real"></td>
-    <td><button class="plus" aria-label="${esc(n)} に1回分を足す">＋</button></td>
+    <td><button class="plus" aria-label="${esc(n)} を target どおり実施／取り消し">${e.r == null ? "⚪️" : "🔵"}</button></td>
     <td class="face">${ok ? "😁" : ""}</td></tr>`;
 }
 function renderAch(){
@@ -400,6 +400,7 @@ function refreshRow(tr){
   const n = tr.dataset.n, ok = achieved(cur, n);
   tr.className = ok ? "ok" : targetOf(cur, n) == null ? "off" : "";
   tr.querySelector(".face").textContent = ok ? "😁" : "";
+  tr.querySelector(".plus").textContent = ((recOf(cur, n) || {}).r) == null ? "⚪️" : "🔵";
   renderAch();
 }
 const dRows = document.getElementById("dRows");
@@ -415,11 +416,15 @@ dRows.addEventListener("change", e => {
 dRows.addEventListener("click", e => {
   const tr = e.target.closest("tr[data-n]"); if (!tr) return;
   const n = tr.dataset.n;
-  if (e.target.closest(".plus")) {               // 1回分（Master の数値、なければ target）を足す
-    const step = (masterOf(n) || {}).v ?? targetOf(cur, n);
-    if (!step) { alert("Master に数値がないため、足す量がわかりません。real に直接入れてください。"); return; }
-    setRec(n, rec => { rec.r = Math.min(CFG.numMax, Math.round(((rec.r || 0) + step) * 100) / 100); });
-    tr.querySelector(".fr").value = recOf(cur, n).r;
+  if (e.target.closest(".plus")) {               // ⚪️：real に target と同じ数を入れる。もう一度押すと real を消す
+    const has = ((recOf(cur, n) || {}).r) != null;
+    if (!has) {
+      const t = targetOf(cur, n);
+      if (!t) { alert("target が空なので入れる数がわかりません。target を入れるか、real に直接入れてください。"); return; }
+      setRec(n, rec => { rec.r = t; });
+    } else setRec(n, rec => { rec.r = null; });
+    const r = (recOf(cur, n) || {}).r;
+    tr.querySelector(".fr").value = r == null ? "" : r;
     refreshRow(tr);
   } else if (e.target.closest("[data-dm]")) {
     const v = prompt(`${n} の memo（${CFG.memoMax}文字まで）`, (recOf(cur, n) || {}).m || "");
