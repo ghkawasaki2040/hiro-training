@@ -1,5 +1,5 @@
 const PREFIX = "hiro-training-v";
-const CACHE = PREFIX + "1";
+const CACHE = PREFIX + "2";
 const FILES = ["./", "index.html", "manifest.webmanifest", "apple-touch-icon.png", "icon-192.png", "icon-512.png"];
 self.addEventListener("install", e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES))); self.skipWaiting(); });
 self.addEventListener("activate", e => {
